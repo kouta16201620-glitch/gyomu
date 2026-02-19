@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f1923">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GYOMU">
+<link rel="manifest" href="./manifest.json">
+<title>業務管理</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #0f1923;
+    --bg2: #16232f;
+    --bg3: #1e3040;
+    --surface: #1a2d3d;
+    --surface2: #243b4f;
+    --border: #2a4660;
+    --accent: #f5a623;
+    --accent2: #e8960f;
+    --accent-dim: rgba(245,166,35,0.15);
+    --green: #4caf82;
+    --green-dim: rgba(76,175,130,0.15);
+    --red: #e05c5c;
+    --red-dim: rgba(224,92,92,0.12);
+    --blue: #4a9eff;
+    --text: #d4e4f0;
+    --text2: #7a9bb5;
+    --text3: #4a6b82;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ─── HEADER ─── */
+  .app-header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    height: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px; font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+  .header-date {
+    font-size: 11px; color: var(--text2);
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* ─── NAV ─── */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .nav-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 10px 0; gap: 4px;
+    background: none; border: none; color: var(--text3);
+    font-size: 10px; font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer; transition: color 0.2s;
+  }
+  .nav-btn.active { color: var(--accent); }
+  .nav-btn svg { width: 22px; height: 22px; }
+
+  /* ─── MAIN ─── */
+  .main { padding: 72px 0 80px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ─── SECTIONS ─── */
+  .section-header {
+    padding: 16px 16px 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+    color: var(--text2); text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* ─── CARDS ─── */
+  .card-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+
+  .project-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+  }
+  .project-card::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--project-color, var(--accent));
+  }
+  .project-card:active { transform: scale(0.98); }
+  .project-card-header {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+  }
+  .project-name { font-weight: 700; font-size: 15px; color: var(--text); }
+  .project-client { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .project-stats {
+    display: flex; gap: 8px; margin-top: 10px;
+  }
+  .stat-badge {
+    font-size: 11px; padding: 3px 8px; border-radius: 20px;
+    font-family: 'Space Mono', monospace;
+  }
+  .stat-badge.total { background: var(--bg3); color: var(--text2); }
+  .stat-badge.done { background: var(--green-dim); color: var(--green); }
+  .stat-badge.today { background: var(--accent-dim); color: var(--accent); }
+
+  /* ─── TASK CARD ─── */
+  .task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    display: flex; gap: 12px; align-items: flex-start;
+    transition: opacity 0.3s;
+  }
+  .task-card.done { opacity: 0.5; }
+  .task-card.archived { display: none; }
+
+  .task-check {
+    width: 22px; height: 22px; flex-shrink: 0;
+    border-radius: 50%; border: 2px solid var(--border);
+    background: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    margin-top: 1px;
+  }
+  .task-check.checked {
+    background: var(--green); border-color: var(--green);
+  }
+  .task-check.checked::after {
+    content: '✓'; color: #fff; font-size: 12px; font-weight: 700;
+  }
+
+  .task-body { flex: 1; min-width: 0; }
+  .task-title {
+    font-size: 14px; font-weight: 500; color: var(--text);
+    word-break: break-word;
+  }
+  .task-card.done .task-title { text-decoration: line-through; color: var(--text3); }
+  .task-meta { display: flex; gap: 8px; align-items: center; margin-top: 5px; flex-wrap: wrap; }
+  .task-project-tag {
+    font-size: 10px; padding: 2px 7px; border-radius: 4px;
+    color: var(--project-color, var(--accent));
+    background: rgba(245,166,35,0.1);
+    border: 1px solid currentColor;
+    opacity: 0.8;
+  }
+  .task-date {
+    font-size: 10px; color: var(--text3);
+    font-family: 'Space Mono', monospace;
+    padding: 2px 7px; border-radius: 4px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 3px;
+    transition: background 0.15s, border-color 0.15s;
+    -webkit-user-select: none; user-select: none;
+  }
+  .task-date:active { background: var(--bg3); }
+  .task-date.date-today {
+    color: var(--accent); border-color: rgba(245,166,35,0.3);
+    background: var(--accent-dim);
+  }
+  .task-date.date-overdue {
+    color: var(--red); border-color: rgba(224,92,92,0.3);
+    background: var(--red-dim);
+  }
+  .task-date.date-future {
+    color: var(--text3); border-color: var(--border);
+  }
+  .task-date.date-none {
+    color: var(--text3); border-style: dashed;
+  }
+
+  /* ─── INLINE DATE PICKER ─── */
+  #inlineDateInput {
+    position: fixed; opacity: 0; pointer-events: none;
+    width: 1px; height: 1px; top: 0; left: 0; z-index: -1;
+  }
+  .task-priority {
+    font-size: 10px; font-weight: 700;
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .task-priority.high { background: var(--red-dim); color: var(--red); }
+  .task-priority.med { background: var(--accent-dim); color: var(--accent); }
+  .task-priority.low { background: var(--green-dim); color: var(--green); }
+
+  .task-actions {
+    display: flex; gap: 4px; flex-shrink: 0;
+  }
+  .icon-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--bg3); border: none;
+    color: var(--text2); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .icon-btn:active { background: var(--border); }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  /* ─── FAB ─── */
+  .fab {
+    position: fixed; right: 20px; bottom: 90px; z-index: 99;
+    width: 56px; height: 56px; border-radius: 16px;
+    background: var(--accent); border: none;
+    color: #000; font-size: 26px; font-weight: 300;
+    cursor: pointer; box-shadow: 0 4px 20px rgba(245,166,35,0.4);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .fab:active { transform: scale(0.93); }
+
+  /* ─── TODAY HEADER ─── */
+  .today-header {
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+  .today-greeting { font-size: 20px; font-weight: 700; color: var(--text); }
+  .today-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .progress-bar-wrap {
+    margin-top: 12px; background: var(--bg3); border-radius: 4px; height: 4px; overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%; background: var(--accent); border-radius: 4px;
+    transition: width 0.4s ease; width: 0%;
+  }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg2);
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid var(--border);
+    width: 100%; max-height: 90vh; overflow-y: auto;
+    padding: 0 0 env(safe-area-inset-bottom);
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal-handle {
+    width: 36px; height: 4px; background: var(--border);
+    border-radius: 2px; margin: 12px auto 0;
+  }
+  .modal-title {
+    font-size: 17px; font-weight: 700; padding: 16px 20px 4px;
+    color: var(--text);
+  }
+  .modal-body { padding: 12px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
+
+  /* ─── FORM ─── */
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: 0.08em; text-transform: uppercase; }
+  .form-input, .form-select, .form-textarea {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 12px 14px;
+    color: var(--text); font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px; outline: none; width: 100%;
+    transition: border-color 0.2s;
+    -webkit-appearance: none; appearance: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--accent);
+  }
+  .form-textarea { resize: none; height: 80px; }
+  .form-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237a9bb5' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+  .btn-primary {
+    background: var(--accent); color: #000;
+    border: none; border-radius: var(--radius-sm);
+    padding: 14px; font-size: 15px; font-weight: 700;
+    cursor: pointer; width: 100%;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: background 0.15s;
+  }
+  .btn-primary:active { background: var(--accent2); }
+  .btn-secondary {
+    background: var(--bg3); color: var(--text2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 14px; font-size: 15px;
+    cursor: pointer; width: 100%;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  /* ─── COLOR PICKER ─── */
+  .color-options { display: flex; gap: 10px; flex-wrap: wrap; }
+  .color-dot {
+    width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+    border: 3px solid transparent; transition: border-color 0.15s;
+  }
+  .color-dot.selected { border-color: var(--text); }
+
+  /* ─── EMPTY STATE ─── */
+  .empty-state {
+    text-align: center; padding: 48px 24px; color: var(--text3);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  /* ─── FILTER TABS ─── */
+  .filter-tabs {
+    display: flex; gap: 8px; padding: 12px 16px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .filter-tabs::-webkit-scrollbar { display: none; }
+  .filter-tab {
+    flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+    border: 1px solid var(--border); background: none;
+    color: var(--text2); font-size: 12px;
+    font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .filter-tab.active {
+    background: var(--accent); border-color: var(--accent);
+    color: #000; font-weight: 700;
+  }
+
+  /* ─── ARCHIVE PAGE ─── */
+  .archive-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    opacity: 0.6;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .archive-item-name { font-size: 13px; color: var(--text2); }
+  .archive-item-date { font-size: 10px; color: var(--text3); font-family: 'Space Mono', monospace; }
+
+  /* ─── SWIPE HINT ─── */
+  .hint-text { font-size: 11px; color: var(--text3); padding: 0 16px 8px; }
+
+  /* Context menu */
+  .ctx-menu {
+    position: fixed; z-index: 300;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); overflow: hidden;
+    box-shadow: var(--shadow);
+    min-width: 160px;
+  }
+  .ctx-item {
+    padding: 12px 16px; font-size: 13px; color: var(--text);
+    cursor: pointer; display: flex; align-items: center; gap: 10px;
+    border: none; background: none; width: 100%;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: background 0.1s;
+  }
+  .ctx-item:active { background: var(--bg3); }
+  .ctx-item.danger { color: var(--red); }
+
+  /* ─── SEARCH ─── */
+  .search-btn {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text2); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .search-btn:active { background: var(--border); color: var(--text); }
+  .search-btn svg { width: 18px; height: 18px; }
+
+  /* Search overlay */
+  .search-overlay {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: var(--bg);
+    flex-direction: column;
+  }
+  .search-overlay.open { display: flex; }
+
+  .search-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    padding-top: calc(12px + env(safe-area-inset-top));
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .search-input-wrap {
+    flex: 1; position: relative; display: flex; align-items: center;
+  }
+  .search-input-wrap svg {
+    position: absolute; left: 12px; width: 16px; height: 16px;
+    color: var(--text3); pointer-events: none; flex-shrink: 0;
+  }
+  .search-main-input {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 36px 10px 36px;
+    color: var(--text); font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15px; outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-main-input:focus { border-color: var(--accent); }
+  .search-clear-btn {
+    position: absolute; right: 10px;
+    background: none; border: none; color: var(--text3);
+    cursor: pointer; padding: 4px; display: none;
+    align-items: center; justify-content: center;
+  }
+  .search-clear-btn.visible { display: flex; }
+  .search-clear-btn svg { width: 16px; height: 16px; }
+  .search-cancel-btn {
+    background: none; border: none; color: var(--accent);
+    font-size: 14px; font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer; white-space: nowrap; padding: 4px;
+  }
+
+  /* Search filters */
+  .search-filters {
+    display: flex; gap: 8px; padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .search-filters::-webkit-scrollbar { display: none; }
+
+  /* Search results */
+  .search-body { flex: 1; overflow-y: auto; padding: 12px 16px; }
+  .search-section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    color: var(--text3); text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+    margin: 16px 0 8px;
+  }
+  .search-section-label:first-child { margin-top: 0; }
+  .search-count {
+    font-size: 11px; color: var(--text3);
+    padding: 0 0 12px;
+    font-family: 'Space Mono', monospace;
+  }
+  .search-empty {
+    text-align: center; padding: 60px 24px; color: var(--text3);
+  }
+  .search-empty .icon { font-size: 40px; margin-bottom: 12px; }
+  .search-empty p { font-size: 13px; line-height: 1.7; }
+
+  /* Highlight matched text */
+  .hl {
+    background: rgba(245,166,35,0.3);
+    color: var(--accent);
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+
+  /* Snackbar */
+  .snackbar {
+    position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%);
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 18px;
+    font-size: 13px; color: var(--text);
+    box-shadow: var(--shadow); z-index: 400;
+    opacity: 0; transition: opacity 0.25s; pointer-events: none;
+    white-space: nowrap;
+  }
+  .snackbar.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- Hidden inline date picker -->
+<input type="date" id="inlineDateInput">
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="logo">GYOMU</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="header-date" id="headerDate"></div>
+    <button class="search-btn" onclick="openSearch()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- TODAY PAGE -->
+  <div class="page active" id="page-today">
+    <div class="today-header">
+      <div class="today-greeting">今日のタスク</div>
+      <div class="today-sub" id="todaySub">読み込み中...</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </div>
+
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="filterToday('all')">すべて</button>
+      <button class="filter-tab" onclick="filterToday('pending')">未完了</button>
+      <button class="filter-tab" onclick="filterToday('done')">完了済み</button>
+    </div>
+
+    <div class="card-list" id="todayList"></div>
+  </div>
+
+  <!-- PROJECTS PAGE -->
+  <div class="page" id="page-projects">
+    <div class="section-header">
+      <span class="section-title">プロジェクト</span>
+    </div>
+    <div class="card-list" id="projectList"></div>
+  </div>
+
+  <!-- TASKS PAGE -->
+  <div class="page" id="page-tasks">
+    <div class="section-header">
+      <span class="section-title" id="taskPageTitle">すべてのタスク</span>
+    </div>
+    <div class="filter-tabs" id="taskProjectFilter"></div>
+    <div class="hint-text">長押しでオプションを表示</div>
+    <div class="card-list" id="taskList"></div>
+  </div>
+
+  <!-- ARCHIVE PAGE -->
+  <div class="page" id="page-archive">
+    <div class="section-header">
+      <span class="section-title">アーカイブ</span>
+    </div>
+    <div class="card-list" id="archiveList"></div>
+  </div>
+
+</main>
+
+<!-- SEARCH OVERLAY -->
+<div class="search-overlay" id="searchOverlay">
+  <div class="search-header">
+    <div class="search-input-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search-main-input" id="searchInput" type="search" placeholder="タスク名・メモで検索..." autocomplete="off" oninput="onSearchInput()">
+      <button class="search-clear-btn" id="searchClearBtn" onclick="clearSearch()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+      </button>
+    </div>
+    <button class="search-cancel-btn" onclick="closeSearch()">キャンセル</button>
+  </div>
+  <div class="search-filters" id="searchFilters">
+    <button class="filter-tab active" onclick="setSearchFilter('all',this)">すべて</button>
+    <button class="filter-tab" onclick="setSearchFilter('pending',this)">未完了</button>
+    <button class="filter-tab" onclick="setSearchFilter('done',this)">完了済み</button>
+    <button class="filter-tab" onclick="setSearchFilter('today',this)">今日</button>
+    <button class="filter-tab" onclick="setSearchFilter('overdue',this)">期限切れ</button>
+  </div>
+  <div class="search-body" id="searchBody">
+    <div class="search-empty">
+      <div class="icon">🔍</div>
+      <p>キーワードを入力してください<br>タスク名・メモ・プロジェクト名で検索できます</p>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="switchPage('today', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+    今日
+  </button>
+  <button class="nav-btn" onclick="switchPage('tasks', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    タスク
+  </button>
+  <button class="nav-btn" onclick="switchPage('projects', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7z"/><path d="M16 2v5M8 2v5M2 9h20"/></svg>
+    プロジェクト
+  </button>
+  <button class="nav-btn" onclick="switchPage('archive', this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="5" rx="1"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M10 13h4"/></svg>
+    アーカイブ
+  </button>
+</nav>
+
+<!-- FAB -->
+<button class="fab" id="fab" onclick="openFab()">＋</button>
+
+<!-- MODAL: Project -->
+<div class="modal-overlay" id="modalProject">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalProjectTitle">プロジェクトを追加</div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">プロジェクト名 *</label>
+        <input class="form-input" id="pjName" placeholder="例：新規サービス開発">
+      </div>
+      <div class="form-group">
+        <label class="form-label">クライアント名</label>
+        <input class="form-input" id="pjClient" placeholder="例：株式会社〇〇">
+      </div>
+      <div class="form-group">
+        <label class="form-label">メモ</label>
+        <textarea class="form-textarea" id="pjNote" placeholder="プロジェクトの概要など..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">カラー</label>
+        <div class="color-options" id="colorOptions"></div>
+      </div>
+      <button class="btn-primary" onclick="saveProject()">保存する</button>
+      <button class="btn-secondary" onclick="closeModal('modalProject')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Task -->
+<div class="modal-overlay" id="modalTask">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTaskTitle">タスクを追加</div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">タスク名 *</label>
+        <input class="form-input" id="taskName" placeholder="例：仕様書の作成">
+      </div>
+      <div class="form-group">
+        <label class="form-label">プロジェクト</label>
+        <select class="form-select" id="taskProject">
+          <option value="">未分類</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">優先度</label>
+        <select class="form-select" id="taskPriority">
+          <option value="med">中</option>
+          <option value="high">高</option>
+          <option value="low">低</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">日付</label>
+        <input class="form-input" type="date" id="taskDate">
+      </div>
+      <div class="form-group">
+        <label class="form-label">メモ</label>
+        <textarea class="form-textarea" id="taskNote" placeholder="詳細や備考など..."></textarea>
+      </div>
+      <button class="btn-primary" onclick="saveTask()">保存する</button>
+      <button class="btn-secondary" onclick="closeModal('modalTask')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div class="ctx-menu" id="ctxMenu" style="display:none"></div>
+
+<!-- Snackbar -->
+<div class="snackbar" id="snackbar"></div>
+
+<script>
+// ─── STATE ───
+const COLORS = ['#f5a623','#4caf82','#4a9eff','#e05c5c','#a78bfa','#fb923c','#38bdf8','#f472b6'];
+let state = {
+  projects: [],
+  tasks: [],
+  archives: []
+};
+let currentPage = 'today';
+let editingProjectId = null;
+let editingTaskId = null;
+let selectedColor = COLORS[0];
+let todayFilter = 'all';
+let taskProjectFilter = 'all';
+
+// ─── STORAGE ───
+function save() { localStorage.setItem('gyomu_v2', JSON.stringify(state)); }
+function load() {
+  const d = localStorage.getItem('gyomu_v2');
+  if (d) state = JSON.parse(d);
+  else {
+    // Sample data
+    state.projects = [
+      { id: 'p1', name: 'Webサイトリニューアル', client: '株式会社ABC', note: '', color: '#4a9eff', createdAt: Date.now() },
+      { id: 'p2', name: 'アプリ開発', client: 'XYZ社', note: '', color: '#4caf82', createdAt: Date.now() }
+    ];
+    const today = new Date().toISOString().split('T')[0];
+    state.tasks = [
+      { id: 't1', name: 'デザインモックアップ確認', projectId: 'p1', priority: 'high', date: today, note: '', done: false, archived: false, createdAt: Date.now() },
+      { id: 't2', name: '要件定義書のレビュー', projectId: 'p2', priority: 'med', date: today, note: '午後3時までに', done: false, archived: false, createdAt: Date.now() },
+      { id: 't3', name: '週次レポート作成', projectId: '', priority: 'low', date: today, note: '', done: true, archived: false, createdAt: Date.now() }
+    ];
+    save();
+  }
+}
+
+function genId() { return Math.random().toString(36).substr(2,9); }
+
+// ─── HEADER DATE ───
+function updateHeaderDate() {
+  const now = new Date();
+  const d = ['日','月','火','水','木','金','土'];
+  document.getElementById('headerDate').textContent =
+    `${now.getMonth()+1}/${now.getDate()} (${d[now.getDay()]})`;
+}
+
+// ─── NAV ───
+function switchPage(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  btn.classList.add('active');
+  currentPage = page;
+  renderAll();
+}
+
+// ─── FAB ───
+function openFab() {
+  if (currentPage === 'projects') openProjectModal();
+  else openTaskModal();
+}
+
+// ─── RENDER ALL ───
+function renderAll() {
+  renderToday();
+  renderProjects();
+  renderTasks();
+  renderArchive();
+}
+
+// ─── TODAY ───
+function filterToday(f) {
+  todayFilter = f;
+  document.querySelectorAll('#page-today .filter-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  renderToday();
+}
+function renderToday() {
+  const today = new Date().toISOString().split('T')[0];
+  const list = document.getElementById('todayList');
+  let tasks = state.tasks.filter(t => !t.archived && t.date === today);
+  const total = tasks.length;
+  const done = tasks.filter(t => t.done).length;
+
+  document.getElementById('todaySub').textContent =
+    total === 0 ? 'タスクなし' : `${done} / ${total} 完了`;
+  document.getElementById('progressBar').style.width =
+    total === 0 ? '0%' : (done/total*100) + '%';
+
+  if (todayFilter === 'pending') tasks = tasks.filter(t => !t.done);
+  else if (todayFilter === 'done') tasks = tasks.filter(t => t.done);
+
+  if (tasks.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>${todayFilter === 'done' ? 'まだ完了タスクがありません' : total === 0 ? '今日のタスクはありません\n＋ボタンで追加しましょう' : 'すべて完了済みです！'}</p></div>`;
+    return;
+  }
+  list.innerHTML = tasks.map(t => renderTaskCard(t)).join('');
+  attachTaskEvents(list);
+}
+
+// ─── PROJECTS ───
+function renderProjects() {
+  const list = document.getElementById('projectList');
+  if (state.projects.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📁</div><p>プロジェクトがありません<br>＋ボタンで追加しましょう</p></div>`;
+    return;
+  }
+  list.innerHTML = state.projects.map(p => {
+    const tasks = state.tasks.filter(t => t.projectId === p.id && !t.archived);
+    const done = tasks.filter(t => t.done).length;
+    const todayT = tasks.filter(t => t.date === new Date().toISOString().split('T')[0]).length;
+    return `<div class="project-card" style="--project-color:${p.color}" onclick="openProjectDetail('${p.id}')" oncontextmenu="openProjectCtx(event,'${p.id}');return false" onlongpress="openProjectCtx(event,'${p.id}')">
+      <div class="project-card-header">
+        <div>
+          <div class="project-name">${esc(p.name)}</div>
+          ${p.client ? `<div class="project-client">${esc(p.client)}</div>` : ''}
+        </div>
+        <button class="icon-btn" onclick="event.stopPropagation();openProjectCtx(event,'${p.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+      </div>
+      <div class="project-stats">
+        <span class="stat-badge total">${tasks.length}件</span>
+        <span class="stat-badge done">${done}完了</span>
+        ${todayT ? `<span class="stat-badge today">今日${todayT}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openProjectDetail(id) {
+  taskProjectFilter = id;
+  document.querySelectorAll('.nav-btn')[1].click();
+}
+
+// ─── TASKS ───
+function renderTasks() {
+  const filterDiv = document.getElementById('taskProjectFilter');
+  const list = document.getElementById('taskList');
+
+  filterDiv.innerHTML = `<button class="filter-tab ${taskProjectFilter==='all'?'active':''}" onclick="setTaskFilter('all',this)">すべて</button>` +
+    state.projects.map(p => `<button class="filter-tab ${taskProjectFilter===p.id?'active':''}" onclick="setTaskFilter('${p.id}',this)" style="${taskProjectFilter===p.id?'background:'+p.color+';border-color:'+p.color+';color:#000':''}">${esc(p.name)}</button>`).join('');
+
+  let tasks = state.tasks.filter(t => !t.archived);
+  if (taskProjectFilter !== 'all') tasks = tasks.filter(t => t.projectId === taskProjectFilter);
+
+  const title = taskProjectFilter === 'all' ? 'すべてのタスク' :
+    (state.projects.find(p => p.id === taskProjectFilter)?.name || '') + 'のタスク';
+  document.getElementById('taskPageTitle').textContent = title;
+
+  if (tasks.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📝</div><p>タスクがありません</p></div>`;
+    return;
+  }
+
+  tasks.sort((a,b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    const pd = {'high':0,'med':1,'low':2};
+    return (pd[a.priority]||1) - (pd[b.priority]||1);
+  });
+
+  list.innerHTML = tasks.map(t => renderTaskCard(t)).join('');
+  attachTaskEvents(list);
+}
+
+function setTaskFilter(id, btn) {
+  taskProjectFilter = id;
+  renderTasks();
+}
+
+// ─── TASK CARD HTML ───
+function getDateClass(dateStr) {
+  if (!dateStr) return 'date-none';
+  const today = new Date().toISOString().split('T')[0];
+  if (dateStr < today) return 'date-overdue';
+  if (dateStr === today) return 'date-today';
+  return 'date-future';
+}
+function formatDateBadge(dateStr) {
+  if (!dateStr) return '📅 日付なし';
+  const today = new Date().toISOString().split('T')[0];
+  const d = new Date(dateStr + 'T00:00:00');
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  const weekdays = ['日','月','火','水','木','金','土'];
+  const w = weekdays[d.getDay()];
+  if (dateStr < today) return `⚠ ${m}/${day}(${w})`;
+  if (dateStr === today) return `今日(${w})`;
+  return `${m}/${day}(${w})`;
+}
+
+function renderTaskCard(t) {
+  const proj = state.projects.find(p => p.id === t.projectId);
+  const pColor = proj?.color || '#7a9bb5';
+  const pLabel = {'high':'高','med':'中','low':'低'}[t.priority]||'中';
+  const pClass = t.priority || 'med';
+  const dateClass = getDateClass(t.date);
+  const dateBadge = formatDateBadge(t.date);
+
+  return `<div class="task-card ${t.done?'done':''}" data-id="${t.id}" oncontextmenu="openTaskCtx(event,'${t.id}');return false">
+    <button class="task-check ${t.done?'checked':''}" onclick="toggleTask('${t.id}')"></button>
+    <div class="task-body">
+      <div class="task-title">${esc(t.name)}</div>
+      <div class="task-meta">
+        ${proj ? `<span class="task-project-tag" style="color:${pColor};border-color:${pColor}30;background:${pColor}18">${esc(proj.name)}</span>` : ''}
+        <span class="task-priority ${pClass}">${pLabel}</span>
+        <span class="task-date ${dateClass}" onclick="event.stopPropagation();inlineEditDate('${t.id}')">${dateBadge}</span>
+        ${t.note ? `<span style="font-size:10px;color:var(--text3)">📎</span>` : ''}
+      </div>
+    </div>
+    <div class="task-actions">
+      <button class="icon-btn" onclick="openTaskCtx(event,'${t.id}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+      </button>
+    </div>
+  </div>`;
+}
+
+function attachTaskEvents(container) {
+  container.querySelectorAll('.task-card').forEach(card => {
+    let timer;
+    card.addEventListener('touchstart', e => {
+      timer = setTimeout(() => {
+        const id = card.dataset.id;
+        const r = card.getBoundingClientRect();
+        showTaskCtxAt(r.right - 10, r.top + 10, id);
+      }, 500);
+    });
+    card.addEventListener('touchend', () => clearTimeout(timer));
+    card.addEventListener('touchmove', () => clearTimeout(timer));
+  });
+}
+
+// ─── ARCHIVE ───
+function renderArchive() {
+  const list = document.getElementById('archiveList');
+  const items = [...state.archives, ...state.tasks.filter(t => t.archived)];
+  if (items.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📦</div><p>アーカイブはありません</p></div>`;
+    return;
+  }
+  list.innerHTML = items.map(item => {
+    const d = item.archivedAt ? new Date(item.archivedAt).toLocaleDateString('ja') : '';
+    const type = item.type === 'project' ? '📁' : '✅';
+    return `<div class="archive-item">
+      <div>
+        <div class="archive-item-name">${type} ${esc(item.name)}</div>
+        ${item.client ? `<div class="archive-item-date">${esc(item.client)}</div>` : ''}
+      </div>
+      <div class="archive-item-date">${d}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── TOGGLE TASK ───
+function toggleTask(id) {
+  const t = state.tasks.find(t => t.id === id);
+  if (!t) return;
+  t.done = !t.done;
+  save(); renderAll();
+  showSnack(t.done ? '✓ 完了しました' : '⟳ 未完了に戻しました');
+}
+
+// ─── CONTEXT MENUS ───
+function openTaskCtx(e, id) {
+  e.stopPropagation();
+  const x = Math.min(e.clientX || e.touches?.[0]?.clientX || 200, window.innerWidth - 170);
+  const y = Math.min(e.clientY || e.touches?.[0]?.clientY || 200, window.innerHeight - 200);
+  showTaskCtxAt(x, y, id);
+}
+function showTaskCtxAt(x, y, id) {
+  const t = state.tasks.find(t => t.id === id);
+  if (!t) return;
+  const menu = document.getElementById('ctxMenu');
+  menu.style.display = 'block';
+  menu.style.left = x + 'px'; menu.style.top = y + 'px';
+  menu.innerHTML = `
+    <button class="ctx-item" onclick="closeCtx();editTask('${id}')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      編集
+    </button>
+    <button class="ctx-item" onclick="closeCtx();toggleTask('${id}')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg>
+      ${t.done ? '未完了に戻す' : '完了にする'}
+    </button>
+    <button class="ctx-item" onclick="closeCtx();archiveTask('${id}')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="5"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M10 13h4"/></svg>
+      アーカイブ
+    </button>
+    <button class="ctx-item danger" onclick="closeCtx();deleteTask('${id}')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+      削除
+    </button>`;
+}
+function openProjectCtx(e, id) {
+  e.stopPropagation();
+  const x = Math.min(e.clientX || 200, window.innerWidth - 170);
+  const y = Math.min(e.clientY || 200, window.innerHeight - 160);
+  const menu = document.getElementById('ctxMenu');
+  menu.style.display = 'block';
+  menu.style.left = x + 'px'; menu.style.top = y + 'px';
+  menu.innerHTML = `
+    <button class="ctx-item" onclick="closeCtx();editProject('${id}')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      編集
+    </button>
+    <button class="ctx-item" onclick="closeCtx();archiveProject('${id}')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="5"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M10 13h4"/></svg>
+      アーカイブ
+    </button>
+    <button class="ctx-item danger" onclick="closeCtx();deleteProject('${id}')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      削除
+    </button>`;
+}
+function closeCtx() { document.getElementById('ctxMenu').style.display = 'none'; }
+document.addEventListener('click', closeCtx);
+document.addEventListener('touchstart', e => {
+  if (!e.target.closest('.ctx-menu')) closeCtx();
+});
+
+// ─── TASK CRUD ───
+function archiveTask(id) {
+  const t = state.tasks.find(t => t.id === id);
+  if (!t) return;
+  t.archived = true; t.archivedAt = Date.now();
+  save(); renderAll();
+  showSnack('📦 アーカイブしました');
+}
+function deleteTask(id) {
+  if (!confirm('このタスクを削除しますか？')) return;
+  state.tasks = state.tasks.filter(t => t.id !== id);
+  save(); renderAll();
+  showSnack('🗑 削除しました');
+}
+
+// ─── PROJECT CRUD ───
+function archiveProject(id) {
+  const p = state.projects.find(p => p.id === id);
+  if (!p) return;
+  p.archivedAt = Date.now(); p.type = 'project';
+  state.archives.push(p);
+  state.projects = state.projects.filter(p => p.id !== id);
+  state.tasks.filter(t => t.projectId === id).forEach(t => { t.archived = true; t.archivedAt = Date.now(); });
+  save(); renderAll();
+  showSnack('📦 アーカイブしました');
+}
+function deleteProject(id) {
+  if (!confirm('プロジェクトとすべてのタスクを削除しますか？')) return;
+  state.projects = state.projects.filter(p => p.id !== id);
+  state.tasks = state.tasks.filter(t => t.projectId !== id);
+  save(); renderAll();
+  showSnack('🗑 削除しました');
+}
+
+// ─── MODALS ───
+function openProjectModal(id) {
+  editingProjectId = id || null;
+  const p = id ? state.projects.find(p => p.id === id) : null;
+  document.getElementById('modalProjectTitle').textContent = id ? 'プロジェクトを編集' : 'プロジェクトを追加';
+  document.getElementById('pjName').value = p?.name || '';
+  document.getElementById('pjClient').value = p?.client || '';
+  document.getElementById('pjNote').value = p?.note || '';
+  selectedColor = p?.color || COLORS[0];
+  renderColorPicker();
+  document.getElementById('modalProject').classList.add('open');
+  setTimeout(() => document.getElementById('pjName').focus(), 300);
+}
+function editProject(id) { openProjectModal(id); }
+
+function renderColorPicker() {
+  document.getElementById('colorOptions').innerHTML = COLORS.map(c =>
+    `<div class="color-dot ${c===selectedColor?'selected':''}" style="background:${c}" onclick="selectColor('${c}')"></div>`
+  ).join('');
+}
+function selectColor(c) { selectedColor = c; renderColorPicker(); }
+
+function saveProject() {
+  const name = document.getElementById('pjName').value.trim();
+  if (!name) { document.getElementById('pjName').focus(); return; }
+  if (editingProjectId) {
+    const p = state.projects.find(p => p.id === editingProjectId);
+    p.name = name; p.client = document.getElementById('pjClient').value.trim();
+    p.note = document.getElementById('pjNote').value.trim(); p.color = selectedColor;
+  } else {
+    state.projects.push({ id: genId(), name, client: document.getElementById('pjClient').value.trim(), note: document.getElementById('pjNote').value.trim(), color: selectedColor, createdAt: Date.now() });
+  }
+  save(); renderAll(); closeModal('modalProject');
+  showSnack(editingProjectId ? '✏️ 更新しました' : '📁 プロジェクトを追加しました');
+}
+
+function openTaskModal(id) {
+  editingTaskId = id || null;
+  const t = id ? state.tasks.find(t => t.id === id) : null;
+  document.getElementById('modalTaskTitle').textContent = id ? 'タスクを編集' : 'タスクを追加';
+  document.getElementById('taskName').value = t?.name || '';
+  document.getElementById('taskNote').value = t?.note || '';
+  document.getElementById('taskPriority').value = t?.priority || 'med';
+  document.getElementById('taskDate').value = t?.date || new Date().toISOString().split('T')[0];
+
+  const sel = document.getElementById('taskProject');
+  sel.innerHTML = '<option value="">未分類</option>' +
+    state.projects.map(p => `<option value="${p.id}" ${t?.projectId===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
+
+  document.getElementById('modalTask').classList.add('open');
+  setTimeout(() => document.getElementById('taskName').focus(), 300);
+}
+function editTask(id) { openTaskModal(id); }
+
+function saveTask() {
+  const name = document.getElementById('taskName').value.trim();
+  if (!name) { document.getElementById('taskName').focus(); return; }
+  const data = {
+    name, projectId: document.getElementById('taskProject').value,
+    priority: document.getElementById('taskPriority').value,
+    date: document.getElementById('taskDate').value,
+    note: document.getElementById('taskNote').value.trim()
+  };
+  if (editingTaskId) {
+    Object.assign(state.tasks.find(t => t.id === editingTaskId), data);
+  } else {
+    state.tasks.push({ id: genId(), ...data, done: false, archived: false, createdAt: Date.now() });
+  }
+  save(); renderAll(); closeModal('modalTask');
+  showSnack(editingTaskId ? '✏️ 更新しました' : '✅ タスクを追加しました');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
+});
+
+// ─── SNACKBAR ───
+let snackTimer;
+function showSnack(msg) {
+  const s = document.getElementById('snackbar');
+  s.textContent = msg; s.classList.add('show');
+  clearTimeout(snackTimer);
+  snackTimer = setTimeout(() => s.classList.remove('show'), 2500);
+}
+
+// ─── AUTO ARCHIVE ───
+function autoArchiveCompletedTasks() {
+  const today = new Date().toISOString().split('T')[0];
+  let count = 0;
+  state.tasks.forEach(t => {
+    if (!t.archived && t.done && t.date && t.date < today) {
+      t.archived = true;
+      t.archivedAt = Date.now();
+      count++;
+    }
+  });
+  if (count > 0) { save(); showSnack(`📦 昨日以前の完了タスクを ${count}件 アーカイブしました`); }
+}
+
+// ─── INLINE DATE EDIT ───
+let inlineDateTaskId = null;
+function inlineEditDate(taskId) {
+  inlineDateTaskId = taskId;
+  const t = state.tasks.find(t => t.id === taskId);
+  if (!t) return;
+  const input = document.getElementById('inlineDateInput');
+  input.value = t.date || new Date().toISOString().split('T')[0];
+  // Make visible briefly to allow click
+  input.style.position = 'fixed';
+  input.style.opacity = '0';
+  input.style.top = '50%';
+  input.style.left = '50%';
+  input.style.width = '1px';
+  input.style.height = '1px';
+  input.style.pointerEvents = 'auto';
+  input.style.zIndex = '9999';
+  input.focus();
+  input.click();
+  input.showPicker && input.showPicker();
+}
+document.getElementById('inlineDateInput').addEventListener('change', function() {
+  if (!inlineDateTaskId) return;
+  const t = state.tasks.find(t => t.id === inlineDateTaskId);
+  if (t && this.value) {
+    t.date = this.value;
+    save(); renderAll();
+    showSnack('📅 日付を更新しました');
+  }
+  inlineDateTaskId = null;
+  this.style.pointerEvents = 'none';
+  this.style.zIndex = '-1';
+});
+
+// ─── SEARCH ───
+let searchFilter = 'all';
+
+function openSearch() {
+  document.getElementById('searchOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('searchInput').focus(), 100);
+}
+function closeSearch() {
+  document.getElementById('searchOverlay').classList.remove('open');
+  clearSearch();
+}
+function clearSearch() {
+  const input = document.getElementById('searchInput');
+  input.value = '';
+  document.getElementById('searchClearBtn').classList.remove('visible');
+  renderSearchResults('');
+}
+function setSearchFilter(f, btn) {
+  searchFilter = f;
+  document.querySelectorAll('#searchFilters .filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  onSearchInput();
+}
+function onSearchInput() {
+  const q = document.getElementById('searchInput').value;
+  document.getElementById('searchClearBtn').classList.toggle('visible', q.length > 0);
+  renderSearchResults(q);
+}
+
+function highlight(text, query) {
+  if (!query) return esc(text);
+  const escaped = esc(text);
+  const escapedQ = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return escaped.replace(new RegExp(escapedQ, 'gi'), m => `<span class="hl">${m}</span>`);
+}
+
+function renderSearchResults(query) {
+  const body = document.getElementById('searchBody');
+  const q = query.trim();
+  const today = new Date().toISOString().split('T')[0];
+
+  if (!q && searchFilter === 'all') {
+    body.innerHTML = `<div class="search-empty"><div class="icon">🔍</div><p>キーワードを入力してください<br>タスク名・メモ・プロジェクト名で検索できます</p></div>`;
+    return;
+  }
+
+  // Filter tasks
+  let tasks = state.tasks.filter(t => !t.archived);
+
+  // Apply search filter
+  if (searchFilter === 'pending') tasks = tasks.filter(t => !t.done);
+  else if (searchFilter === 'done') tasks = tasks.filter(t => t.done);
+  else if (searchFilter === 'today') tasks = tasks.filter(t => t.date === today);
+  else if (searchFilter === 'overdue') tasks = tasks.filter(t => !t.done && t.date && t.date < today);
+
+  // Apply text search
+  if (q) {
+    const lower = q.toLowerCase();
+    tasks = tasks.filter(t => {
+      const proj = state.projects.find(p => p.id === t.projectId);
+      return t.name.toLowerCase().includes(lower)
+        || (t.note && t.note.toLowerCase().includes(lower))
+        || (proj && proj.name.toLowerCase().includes(lower));
+    });
+  }
+
+  if (tasks.length === 0) {
+    body.innerHTML = `<div class="search-empty"><div class="icon">😶</div><p>「${esc(q)}」に一致するタスクは<br>見つかりませんでした</p></div>`;
+    return;
+  }
+
+  // Sort: undone first, then by date
+  tasks.sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    return (a.date || '9999') < (b.date || '9999') ? -1 : 1;
+  });
+
+  // Group by project
+  const groups = {};
+  tasks.forEach(t => {
+    const proj = state.projects.find(p => p.id === t.projectId);
+    const key = proj ? proj.id : '__none__';
+    const label = proj ? proj.name : '未分類';
+    const color = proj ? proj.color : '#7a9bb5';
+    if (!groups[key]) groups[key] = { label, color, tasks: [] };
+    groups[key].tasks.push(t);
+  });
+
+  let html = `<div class="search-count">${tasks.length}件見つかりました</div>`;
+  Object.values(groups).forEach(g => {
+    html += `<div class="search-section-label" style="color:${g.color}">${esc(g.label)} (${g.tasks.length})</div>`;
+    html += `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">`;
+    g.tasks.forEach(t => {
+      const proj = state.projects.find(p => p.id === t.projectId);
+      const pColor = proj?.color || '#7a9bb5';
+      const pLabel = {'high':'高','med':'中','low':'低'}[t.priority]||'中';
+      const pClass = t.priority || 'med';
+      const dateClass = getDateClass(t.date);
+      const dateBadge = formatDateBadge(t.date);
+      const titleHtml = highlight(t.name, q);
+      const noteHtml = t.note ? highlight(t.note, q) : '';
+
+      html += `<div class="task-card ${t.done?'done':''}" data-id="${t.id}" oncontextmenu="openTaskCtx(event,'${t.id}');return false">
+        <button class="task-check ${t.done?'checked':''}" onclick="toggleTask('${t.id}');renderSearchResults(document.getElementById('searchInput').value)"></button>
+        <div class="task-body">
+          <div class="task-title">${titleHtml}</div>
+          ${noteHtml ? `<div style="font-size:12px;color:var(--text2);margin-top:3px">${noteHtml}</div>` : ''}
+          <div class="task-meta">
+            ${proj ? `<span class="task-project-tag" style="color:${pColor};border-color:${pColor}30;background:${pColor}18">${highlight(proj.name, q)}</span>` : ''}
+            <span class="task-priority ${pClass}">${pLabel}</span>
+            <span class="task-date ${dateClass}" onclick="event.stopPropagation();inlineEditDate('${t.id}')">${dateBadge}</span>
+          </div>
+        </div>
+        <div class="task-actions">
+          <button class="icon-btn" onclick="openTaskCtx(event,'${t.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  body.innerHTML = html;
+
+  // Attach long-press events
+  attachTaskEvents(body);
+}
+
+// Close search on back gesture (Android)
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSearch();
+});
+window.addEventListener('popstate', () => {
+  if (document.getElementById('searchOverlay').classList.contains('open')) {
+    closeSearch();
+    history.pushState(null, '');
+  }
+});
+history.pushState(null, '');
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ─── INIT ───
+load();
+autoArchiveCompletedTasks();
+updateHeaderDate();
+renderAll();
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js');
+    });
+  }
+</script>
+</body>
+</html>
