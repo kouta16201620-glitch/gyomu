@@ -387,6 +387,97 @@
   .ctx-item:active { background: var(--bg3); }
   .ctx-item.danger { color: var(--red); }
 
+  /* ─── SEARCH ─── */
+  .search-btn {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text2); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .search-btn:active { background: var(--border); color: var(--text); }
+  .search-btn svg { width: 18px; height: 18px; }
+
+  /* Search overlay */
+  .search-overlay {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: var(--bg);
+    flex-direction: column;
+  }
+  .search-overlay.open { display: flex; }
+
+  .search-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    padding-top: calc(12px + env(safe-area-inset-top));
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .search-input-wrap {
+    flex: 1; position: relative; display: flex; align-items: center;
+  }
+  .search-input-wrap svg {
+    position: absolute; left: 12px; width: 16px; height: 16px;
+    color: var(--text3); pointer-events: none; flex-shrink: 0;
+  }
+  .search-main-input {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 36px 10px 36px;
+    color: var(--text); font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15px; outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-main-input:focus { border-color: var(--accent); }
+  .search-clear-btn {
+    position: absolute; right: 10px;
+    background: none; border: none; color: var(--text3);
+    cursor: pointer; padding: 4px; display: none;
+    align-items: center; justify-content: center;
+  }
+  .search-clear-btn.visible { display: flex; }
+  .search-clear-btn svg { width: 16px; height: 16px; }
+  .search-cancel-btn {
+    background: none; border: none; color: var(--accent);
+    font-size: 14px; font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer; white-space: nowrap; padding: 4px;
+  }
+
+  /* Search filters */
+  .search-filters {
+    display: flex; gap: 8px; padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .search-filters::-webkit-scrollbar { display: none; }
+
+  /* Search results */
+  .search-body { flex: 1; overflow-y: auto; padding: 12px 16px; }
+  .search-section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    color: var(--text3); text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+    margin: 16px 0 8px;
+  }
+  .search-section-label:first-child { margin-top: 0; }
+  .search-count {
+    font-size: 11px; color: var(--text3);
+    padding: 0 0 12px;
+    font-family: 'Space Mono', monospace;
+  }
+  .search-empty {
+    text-align: center; padding: 60px 24px; color: var(--text3);
+  }
+  .search-empty .icon { font-size: 40px; margin-bottom: 12px; }
+  .search-empty p { font-size: 13px; line-height: 1.7; }
+
+  /* Highlight matched text */
+  .hl {
+    background: rgba(245,166,35,0.3);
+    color: var(--accent);
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+
   /* Snackbar */
   .snackbar {
     position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%);
@@ -408,7 +499,12 @@
 <!-- HEADER -->
 <header class="app-header">
   <div class="logo">GYOMU</div>
-  <div class="header-date" id="headerDate"></div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="header-date" id="headerDate"></div>
+    <button class="search-btn" onclick="openSearch()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </button>
+  </div>
 </header>
 
 <!-- MAIN -->
@@ -460,6 +556,33 @@
   </div>
 
 </main>
+
+<!-- SEARCH OVERLAY -->
+<div class="search-overlay" id="searchOverlay">
+  <div class="search-header">
+    <div class="search-input-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search-main-input" id="searchInput" type="search" placeholder="タスク名・メモで検索..." autocomplete="off" oninput="onSearchInput()">
+      <button class="search-clear-btn" id="searchClearBtn" onclick="clearSearch()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+      </button>
+    </div>
+    <button class="search-cancel-btn" onclick="closeSearch()">キャンセル</button>
+  </div>
+  <div class="search-filters" id="searchFilters">
+    <button class="filter-tab active" onclick="setSearchFilter('all',this)">すべて</button>
+    <button class="filter-tab" onclick="setSearchFilter('pending',this)">未完了</button>
+    <button class="filter-tab" onclick="setSearchFilter('done',this)">完了済み</button>
+    <button class="filter-tab" onclick="setSearchFilter('today',this)">今日</button>
+    <button class="filter-tab" onclick="setSearchFilter('overdue',this)">期限切れ</button>
+  </div>
+  <div class="search-body" id="searchBody">
+    <div class="search-empty">
+      <div class="icon">🔍</div>
+      <p>キーワードを入力してください<br>タスク名・メモ・プロジェクト名で検索できます</p>
+    </div>
+  </div>
+</div>
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
@@ -1045,7 +1168,146 @@ document.getElementById('inlineDateInput').addEventListener('change', function()
   this.style.zIndex = '-1';
 });
 
-// ─── ESC ───
+// ─── SEARCH ───
+let searchFilter = 'all';
+
+function openSearch() {
+  document.getElementById('searchOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('searchInput').focus(), 100);
+}
+function closeSearch() {
+  document.getElementById('searchOverlay').classList.remove('open');
+  clearSearch();
+}
+function clearSearch() {
+  const input = document.getElementById('searchInput');
+  input.value = '';
+  document.getElementById('searchClearBtn').classList.remove('visible');
+  renderSearchResults('');
+}
+function setSearchFilter(f, btn) {
+  searchFilter = f;
+  document.querySelectorAll('#searchFilters .filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  onSearchInput();
+}
+function onSearchInput() {
+  const q = document.getElementById('searchInput').value;
+  document.getElementById('searchClearBtn').classList.toggle('visible', q.length > 0);
+  renderSearchResults(q);
+}
+
+function highlight(text, query) {
+  if (!query) return esc(text);
+  const escaped = esc(text);
+  const escapedQ = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return escaped.replace(new RegExp(escapedQ, 'gi'), m => `<span class="hl">${m}</span>`);
+}
+
+function renderSearchResults(query) {
+  const body = document.getElementById('searchBody');
+  const q = query.trim();
+  const today = new Date().toISOString().split('T')[0];
+
+  if (!q && searchFilter === 'all') {
+    body.innerHTML = `<div class="search-empty"><div class="icon">🔍</div><p>キーワードを入力してください<br>タスク名・メモ・プロジェクト名で検索できます</p></div>`;
+    return;
+  }
+
+  // Filter tasks
+  let tasks = state.tasks.filter(t => !t.archived);
+
+  // Apply search filter
+  if (searchFilter === 'pending') tasks = tasks.filter(t => !t.done);
+  else if (searchFilter === 'done') tasks = tasks.filter(t => t.done);
+  else if (searchFilter === 'today') tasks = tasks.filter(t => t.date === today);
+  else if (searchFilter === 'overdue') tasks = tasks.filter(t => !t.done && t.date && t.date < today);
+
+  // Apply text search
+  if (q) {
+    const lower = q.toLowerCase();
+    tasks = tasks.filter(t => {
+      const proj = state.projects.find(p => p.id === t.projectId);
+      return t.name.toLowerCase().includes(lower)
+        || (t.note && t.note.toLowerCase().includes(lower))
+        || (proj && proj.name.toLowerCase().includes(lower));
+    });
+  }
+
+  if (tasks.length === 0) {
+    body.innerHTML = `<div class="search-empty"><div class="icon">😶</div><p>「${esc(q)}」に一致するタスクは<br>見つかりませんでした</p></div>`;
+    return;
+  }
+
+  // Sort: undone first, then by date
+  tasks.sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    return (a.date || '9999') < (b.date || '9999') ? -1 : 1;
+  });
+
+  // Group by project
+  const groups = {};
+  tasks.forEach(t => {
+    const proj = state.projects.find(p => p.id === t.projectId);
+    const key = proj ? proj.id : '__none__';
+    const label = proj ? proj.name : '未分類';
+    const color = proj ? proj.color : '#7a9bb5';
+    if (!groups[key]) groups[key] = { label, color, tasks: [] };
+    groups[key].tasks.push(t);
+  });
+
+  let html = `<div class="search-count">${tasks.length}件見つかりました</div>`;
+  Object.values(groups).forEach(g => {
+    html += `<div class="search-section-label" style="color:${g.color}">${esc(g.label)} (${g.tasks.length})</div>`;
+    html += `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">`;
+    g.tasks.forEach(t => {
+      const proj = state.projects.find(p => p.id === t.projectId);
+      const pColor = proj?.color || '#7a9bb5';
+      const pLabel = {'high':'高','med':'中','low':'低'}[t.priority]||'中';
+      const pClass = t.priority || 'med';
+      const dateClass = getDateClass(t.date);
+      const dateBadge = formatDateBadge(t.date);
+      const titleHtml = highlight(t.name, q);
+      const noteHtml = t.note ? highlight(t.note, q) : '';
+
+      html += `<div class="task-card ${t.done?'done':''}" data-id="${t.id}" oncontextmenu="openTaskCtx(event,'${t.id}');return false">
+        <button class="task-check ${t.done?'checked':''}" onclick="toggleTask('${t.id}');renderSearchResults(document.getElementById('searchInput').value)"></button>
+        <div class="task-body">
+          <div class="task-title">${titleHtml}</div>
+          ${noteHtml ? `<div style="font-size:12px;color:var(--text2);margin-top:3px">${noteHtml}</div>` : ''}
+          <div class="task-meta">
+            ${proj ? `<span class="task-project-tag" style="color:${pColor};border-color:${pColor}30;background:${pColor}18">${highlight(proj.name, q)}</span>` : ''}
+            <span class="task-priority ${pClass}">${pLabel}</span>
+            <span class="task-date ${dateClass}" onclick="event.stopPropagation();inlineEditDate('${t.id}')">${dateBadge}</span>
+          </div>
+        </div>
+        <div class="task-actions">
+          <button class="icon-btn" onclick="openTaskCtx(event,'${t.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  body.innerHTML = html;
+
+  // Attach long-press events
+  attachTaskEvents(body);
+}
+
+// Close search on back gesture (Android)
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSearch();
+});
+window.addEventListener('popstate', () => {
+  if (document.getElementById('searchOverlay').classList.contains('open')) {
+    closeSearch();
+    history.pushState(null, '');
+  }
+});
+history.pushState(null, '');
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ─── INIT ───
